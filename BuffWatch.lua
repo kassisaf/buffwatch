@@ -106,11 +106,11 @@ windower.register_event('prerender', function()
   image:text('')
   for i, buff_id in ipairs(buff_ids) do
     local buff = res.buffs[buff_id]
+    local color = colors.white
 
     if buff ~= nil then
-      local color = colors.white
       -- TODO: Make line red if buff is missing/inactive
-      if (true) then
+      if (i % 2 == 0) then
         color = colors.red
       end
       -- TODO: Replace placeholder text with buffs from active profile

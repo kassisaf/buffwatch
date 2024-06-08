@@ -39,32 +39,23 @@ res = require('resources')
 texts = require('texts')
 
 image = texts.new()
+colors = {
+  white = '\\cs(255,255,255)',
+  red = '\\cs(255,0,0)',
+  green = '\\cs(0,255,0)',
+  blue = '\\cs(0,0,255)',
+  yellow = '\\cs(255,255,0)',
+  cyan = '\\cs(0,255,255)',
+  magenta = '\\cs(255,0,255)',
+  black = '\\cs(0,0,0)'
+}
 
 windower.register_event('load', function()
   defaults = {
-    profiles = {},
-    bg_alpha = 128,
-    pos = {
-      x = 200,
-      y = 440
+    background = {
+      visible = true,
+      alpha = 128
     },
-    text = {
-      font = 'Consolas',
-      size = 12
-    }
-  }
-  settings = config.load(defaults)
-
-  image:bg_alpha(settings.bg_alpha)
-  image:pos_x(settings.pos.x)
-  image:pos_y(settings.pos.y)
-  image:font(settings.text.font)
-  image:size(settings.text.size)
-end)
-
-windower.register_event('load', function()
-  defaults = {
-    bg_alpha = 150,
     pos = {
       x = 146,
       y = 85
@@ -72,17 +63,25 @@ windower.register_event('load', function()
     profiles = {},
     text = {
       font = 'Arial',
-      size = 11
+      size = 11,
+      stroke = {
+        width = 2,
+        transparency = 192
+      }
     }
   }
   settings = config.load(defaults)
   settings:save('all')
 
-  image:bg_alpha(settings.bg_alpha)
+  image:bg_visible(settings.background.visible)
+  image:bg_alpha(settings.background.alpha)
   image:pos_x(settings.pos.x)
   image:pos_y(settings.pos.y)
   image:font(settings.text.font)
   image:size(settings.text.size)
+  image:stroke_width(settings.text.stroke.width)
+  image:stroke_transparency(settings.text.stroke.transparency)
+  image:right_justified(false)
 end)
 
 windower.register_event('unload', function()
@@ -100,7 +99,8 @@ windower.register_event('prerender', function()
   for i, buff_id in ipairs(buff_ids) do
     buff = res.buffs[buff_id]
     if buff ~= nil then
-      image:append(buff_id .. ': ' .. buff.en .. '\n')
+      image:append(colors.red .. buff_id .. ': ' .. buff.en .. '\n' .. colors.white)
+      -- image:append(buff_id .. ': ' .. buff.en .. '\n')
     end
   end
 
@@ -171,10 +171,10 @@ function remove_buff(profile_name, buff_name)
     settings.profiles[profile_name]['_' .. buff_id] = nil
     log(buff_name .. ' (' .. buff_id .. ')' .. '` removed from profile `' .. profile_name .. '`')
     -- TODO: Remove profile if empty (getn doesn't work here)
-    -- if table.getn(settings.profiles[profile_name]) == 0 then
-    --   settings.profiles[profile_name] = nil
-    --   log('Profile `' .. profile_name .. '` removed because it was empty')
-    -- end
+    if settings.profiles[profile_name]:length() == 0 then
+      settings.profiles[profile_name] = nil
+      log('Profile `' .. profile_name .. '` removed because it was empty')
+    end
     settings:save('profiles')
   else
     log('Buff `' .. buff_name .. '` not found in profile `' .. profile_name .. '`')

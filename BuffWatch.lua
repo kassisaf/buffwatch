@@ -57,8 +57,8 @@ windower.register_event('load', function()
       alpha = 128
     },
     pos = {
-      x = 146,
-      y = 85
+      x = 141,
+      y = 83
     },
     profiles = {
       global = {
@@ -103,12 +103,19 @@ end)
 windower.register_event('prerender', function()
   buff_ids = windower.ffxi.get_player().buffs
 
-  -- image:text(table.concat(buff_ids, ', '))
   image:text('')
   for i, buff_id in ipairs(buff_ids) do
-    buff = res.buffs[buff_id]
+    local buff = res.buffs[buff_id]
+
     if buff ~= nil then
-      image:append(string.format(' %s %s: %s\n', colors.red, buff_id, buff.en))
+      local color = colors.white
+      -- TODO: Make line red if buff is missing/inactive
+      if (true) then
+        color = colors.red
+      end
+      -- TODO: Replace placeholder text with buffs from active profile
+      local line = string.format(' %s%s: %s\n', color, buff_id, buff.en)
+      image:append(line)
     end
   end
 

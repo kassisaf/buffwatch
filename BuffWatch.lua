@@ -37,37 +37,71 @@ require('logger')
 config = require('config')
 texts = require('texts')
 
-display = texts.new()
+image = texts.new()
 
 windower.register_event('load', function()
   defaults = {
-    bg = {
-      alpha = 255,
-      red = 0,
-      green = 0,
-      blue = 0
-    },
-    language = windower.ffxi.get_info().language,
-    pos = {
-      x = 0,
-      y = 0
-    },
     profiles = {},
+    bg_alpha = 128,
+    pos = {
+      x = 200,
+      y = 440
+    },
     text = {
+      font = 'Consolas',
       size = 12
     }
   }
   settings = config.load(defaults)
-  lang = string.lower(settings.language)
   player = windower.ffxi.get_player()
+
+  image:bg_alpha(settings.bg_alpha)
+  image:pos_x(settings.pos.x)
+  image:pos_y(settings.pos.y)
+  image:font(settings.text.font)
+  image:size(settings.text.size)
+end)
+
+windower.register_event('load', function()
+  defaults = {
+    profiles = {},
+    bg_alpha = 180,
+    pos = {
+      x = 200,
+      y = 440
+    },
+    text = {
+      font = 'Consolas',
+      size = 12
+    }
+  }
+  settings = config.load(defaults)
+  player = windower.ffxi.get_player()
+
+  image:bg_alpha(settings.bg_alpha)
+  image:pos_x(settings.pos.x)
+  image:pos_y(settings.pos.y)
+  image:font(settings.text.font)
+  image:size(settings.text.size)
+end)
+
+windower.register_event('unload', function()
+  settings = config.load()
+  settings.pos.x = image:pos_x()
+  settings.pos.y = image:pos_y()
+  settings:save('all')
 end)
 
 function refresh_display()
-  display:text('test')
-  display:visible(true)
+  image:text('test')
+  image:visible(true)
 end
 
 refresh_display()
+
+windower.register_event('prerender', function()
+  -- image:visible(true)
+end)
 
 windower.register_event('addon command', function(...)
   cmd = {

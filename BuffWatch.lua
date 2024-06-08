@@ -68,15 +68,15 @@ windower.register_event('load', function()
     bg_alpha = 180,
     pos = {
       x = 200,
-      y = 440
+      y = 600
     },
     text = {
-      font = 'Consolas',
-      size = 12
+      font = 'Arial',
+      size = 11
     }
   }
   settings = config.load(defaults)
-  player = windower.ffxi.get_player()
+  settings:save('all')
 
   image:bg_alpha(settings.bg_alpha)
   image:pos_x(settings.pos.x)

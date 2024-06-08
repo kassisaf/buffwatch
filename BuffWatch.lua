@@ -35,6 +35,7 @@ _addon.commands = {
 
 require('logger')
 config = require('config')
+res = require('resources')
 texts = require('texts')
 
 image = texts.new()
@@ -92,8 +93,15 @@ windower.register_event('unload', function()
 end)
 
 windower.register_event('prerender', function()
-  player = windower.ffxi.get_player()
-  image:text(table.concat(player.buffs, ', '))
+  buff_ids = windower.ffxi.get_player().buffs
+  -- image:text(table.concat(buff_ids, ', '))
+  image:text('')
+  for i, buff_id in ipairs(buff_ids) do
+    buff = res.buffs[buff_id]
+    if buff ~= nil then
+      image:append(buff_id .. ': ' .. buff.en .. '\n')
+    end
+  end
   image:visible(true)
 end)
 

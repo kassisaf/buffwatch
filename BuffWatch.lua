@@ -35,20 +35,39 @@ _addon.commands = {
 
 require('logger')
 config = require('config')
+texts = require('texts')
+
+display = texts.new()
 
 windower.register_event('load', function()
   defaults = {
+    bg = {
+      alpha = 255,
+      red = 0,
+      green = 0,
+      blue = 0
+    },
     language = windower.ffxi.get_info().language,
-    profiles = {}
+    pos = {
+      x = 0,
+      y = 0
+    },
+    profiles = {},
+    text = {
+      size = 12
+    }
   }
   settings = config.load(defaults)
   lang = string.lower(settings.language)
   player = windower.ffxi.get_player()
 end)
 
-windower.register_event('login', function()
-  player = windower.ffxi.get_player()
-end)
+function refresh_display()
+  display:text('test')
+  display:visible(true)
+end
+
+refresh_display()
 
 windower.register_event('addon command', function(...)
   cmd = {

@@ -99,8 +99,8 @@ windower.register_event('prerender', function()
   for i, buff_id in ipairs(buff_ids) do
     buff = res.buffs[buff_id]
     if buff ~= nil then
-      image:append(colors.red .. buff_id .. ': ' .. buff.en .. '\n' .. colors.white)
-      -- image:append(buff_id .. ': ' .. buff.en .. '\n')
+      -- image:append('%s %s: %s %s\n', colors.red, buff_id, buff.en, colors.white)
+      image:append(string.format('%s: %s\n', buff_id, buff.en))
     end
   end
 
@@ -129,54 +129,54 @@ windower.register_event('addon command', function(...)
 end)
 
 function get_buff_id(buff_name)
-  if res.buffs:with('en', buff_name) ~= nil then
-    return res.buffs:with('en', buff_name).id
+  if res.buffs:with('en', buff_name) == nil then
+    error(string.format('Invalid buff name: `%s` (case sensitive)', buff_name))
+    return nil
   end
-  return nil
+  return res.buffs:with('en', buff_name).id
 end
 
 function add_buff(profile_name, buff_name)
-  -- Create profile if it doesn't already exist
-  if settings.profiles[profile_name] == nil then
-    settings.profiles[profile_name] = {}
-    log('Profile `' .. profile_name .. '` created')
-  end
+  settings = config.load()
   -- Validate buff name
   buff_id = get_buff_id(buff_name)
   if buff_id == nil then
-    error('Invalid buff name: ' .. buff_name .. ' (case sensitive)')
     return
+  end
+  -- Create profile if it doesn't already exist
+  if settings.profiles[profile_name] == nil then
+    settings.profiles[profile_name] = {}
+    log(string.format('Profile `%s` created', profile_name))
   end
   -- Add buff to profile
   if settings.profiles[profile_name]['_' .. buff_id] == nil then
     settings.profiles[profile_name]['_' .. buff_id] = buff_name
-    log('Added ' .. buff_name .. ' (' .. buff_id .. ')' .. '` to profile `' .. profile_name .. '`')
+    log(string.format('Added %s (%d) to profile `%s`', buff_name, buff_id, profile_name))
     settings:save('profiles')
   else
-    log(buff_name .. ' (' .. buff_id .. ')' .. ' already exists in profile `' .. profile_name .. '`')
+    log(string.format('Buff `%s` (%d) already exists in profile `%s`', buff_name, buff_id, profile_name))
   end
 end
 
 function remove_buff(profile_name, buff_name)
   settings = config.load()
-
+  -- Validate buff name
   buff_id = get_buff_id(buff_name)
   if buff_id == nil then
-    error('Invalid buff name: ' .. buff_name .. ' (case sensitive)')
     return
   end
 
   if settings.profiles[profile_name]['_' .. buff_id] ~= nil then
     -- Remove buff from profile
     settings.profiles[profile_name]['_' .. buff_id] = nil
-    log(buff_name .. ' (' .. buff_id .. ')' .. '` removed from profile `' .. profile_name .. '`')
-    -- TODO: Remove profile if empty (getn doesn't work here)
+    log(string.format('Removed %s (%d) from profile `%s`', buff_name, buff_id, profile_name))
+    -- Remove profile if empty
     if settings.profiles[profile_name]:length() == 0 then
       settings.profiles[profile_name] = nil
-      log('Profile `' .. profile_name .. '` removed because it was empty')
+      log(string.format('Profile `%s` removed because it was empty', profile_name))
     end
     settings:save('profiles')
   else
-    log('Buff `' .. buff_name .. '` not found in profile `' .. profile_name .. '`')
+    log(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
   end
 end

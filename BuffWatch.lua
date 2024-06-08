@@ -53,7 +53,6 @@ windower.register_event('load', function()
     }
   }
   settings = config.load(defaults)
-  player = windower.ffxi.get_player()
 
   image:bg_alpha(settings.bg_alpha)
   image:pos_x(settings.pos.x)
@@ -64,12 +63,12 @@ end)
 
 windower.register_event('load', function()
   defaults = {
-    profiles = {},
-    bg_alpha = 180,
+    bg_alpha = 150,
     pos = {
       x = 200,
       y = 600
     },
+    profiles = {},
     text = {
       font = 'Arial',
       size = 11
@@ -92,15 +91,10 @@ windower.register_event('unload', function()
   settings:save('all')
 end)
 
-function refresh_display()
-  image:text('test')
-  image:visible(true)
-end
-
-refresh_display()
-
 windower.register_event('prerender', function()
-  -- image:visible(true)
+  player = windower.ffxi.get_player()
+  image:text(table.concat(player.buffs, ', '))
+  image:visible(true)
 end)
 
 windower.register_event('addon command', function(...)
@@ -108,10 +102,7 @@ windower.register_event('addon command', function(...)
     ...
   }
   if cmd[1] == 'help' then
-    -- windower.add_to_chat(207, 'BuffWatch: //bw help')
-    -- windower.add_to_chat(207, 'BuffWatch: //bw list')
-    -- windower.add_to_chat(207, 'BuffWatch: //bw add <buff>')
-    -- windower.add_to_chat(207, 'BuffWatch: //bw remove <buff>')
+    -- TODO: Add help text
   elseif cmd[1] == 'add' then
     if cmd[2] == nil or cmd[3] == nil then
       error('Invalid command. Try `//bw add <profile> <buff>`')

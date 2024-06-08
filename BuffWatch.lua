@@ -53,14 +53,23 @@ colors = {
 windower.register_event('load', function()
   defaults = {
     background = {
-      visible = true,
+      visible = false,
       alpha = 128
     },
     pos = {
       x = 146,
       y = 85
     },
-    profiles = {},
+    profiles = {
+      global = {
+        _618 = "Emporox's Gift"
+      },
+      pld = {
+        _116 = "Phalanx",
+        _93 = "Defense Boost", -- Cocoon
+        _289 = "Enmity Boost" -- Crusade
+      }
+    },
     text = {
       font = 'Arial',
       size = 11,
@@ -99,8 +108,7 @@ windower.register_event('prerender', function()
   for i, buff_id in ipairs(buff_ids) do
     buff = res.buffs[buff_id]
     if buff ~= nil then
-      -- image:append('%s %s: %s %s\n', colors.red, buff_id, buff.en, colors.white)
-      image:append(string.format('%s: %s\n', buff_id, buff.en))
+      image:append(string.format(' %s %s: %s\n', colors.red, buff_id, buff.en))
     end
   end
 

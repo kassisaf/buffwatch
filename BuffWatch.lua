@@ -49,6 +49,7 @@ colors = {
   magenta = '\\cs(255,0,255)',
   black = '\\cs(0,0,0)'
 }
+active_profile = nil
 
 windower.register_event('load', function()
   defaults = {
@@ -101,7 +102,11 @@ windower.register_event('unload', function()
 end)
 
 windower.register_event('prerender', function()
-  buff_ids = windower.ffxi.get_player().buffs
+  update_text()
+end)
+
+function update_text()
+  local buff_ids = windower.ffxi.get_player().buffs
 
   image:text('')
   for i, buff_id in ipairs(buff_ids) do
@@ -120,7 +125,7 @@ windower.register_event('prerender', function()
   end
 
   image:visible(true)
-end)
+end
 
 function get_buff_id(buff_name)
   if res.buffs:with('en', buff_name) == nil then
@@ -133,7 +138,7 @@ end
 function add_buff(profile_name, buff_name)
   settings = config.load()
   -- Validate buff name
-  buff_id = get_buff_id(buff_name)
+  local buff_id = get_buff_id(buff_name)
   if buff_id == nil then
     return
   end
@@ -155,7 +160,7 @@ end
 function remove_buff(profile_name, buff_name)
   settings = config.load()
   -- Validate buff name
-  buff_id = get_buff_id(buff_name)
+  local buff_id = get_buff_id(buff_name)
   if buff_id == nil then
     return
   end
@@ -171,7 +176,29 @@ function remove_buff(profile_name, buff_name)
     end
     settings:save('profiles')
   else
-    log(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
+    error(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
+  end
+end
+
+function set_active_profile(profile_name)
+  settings = config.load()
+  if settings.profiles[profile_name] == nil then
+    error(string.format('Profile `%s` not found', profile_name))
+    return
+  end
+  active_profile = profile_name
+  log(string.format('Active profile set to `%s`', profile_name))
+end
+
+function list_profiles()
+  settings = config.load()
+  log('Available profiles and number of buffs tracked:')
+  for profile_name, profile in pairs(settings.profiles) do
+    local line = string.format(' %s [%d]', profile_name, profile:length())
+    if profile_name == active_profile then
+      line = line .. ' (active)'
+    end
+    log(line)
   end
 end
 
@@ -185,13 +212,13 @@ function print_active_buffs()
   for i, buff_id in ipairs(player.buffs) do
     local buff = res.buffs[buff_id]
     if buff ~= nil then
-      log(string.format('%d: %s', buff_id, buff.en))
+      log(string.format(' %d: %s', buff_id, buff.en))
     end
   end
 end
 
 function search(buff_name)
-  found = false
+  local found = false
   for i, buff in pairs(res.buffs) do
     if buff.en:lower():find(buff_name:lower()) then
       log(string.format('%d: %s', buff.id, buff.en))
@@ -214,24 +241,34 @@ windower.register_event('addon command', function(...)
 
   elseif cmd[1] == 'add' or cmd[1] == 'a' then
     if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw add <profile> <buff>`')
+      error('Invalid command. Try `bw <add|a> <profile> <buff>`')
     else
       add_buff(cmd[2], cmd[3])
     end
 
-  elseif cmd[1] == 'remove' or cmd[1] == 'rm' then
+  elseif cmd[1] == 'remove' or cmd[1] == 'r' then
     if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw remove <profile> <buff>`')
+      error('Invalid command. Try `bw <remove|r> <profile> <buff>`')
     else
       remove_buff(cmd[2], cmd[3])
     end
 
-  elseif cmd[1] == 'active' then
+  elseif cmd[1] == 'set' or cmd[1] == 's' then
+    if cmd[2] == nil then
+      error('Invalid command. Try `bw <set|s> <profile>`')
+    else
+      set_active_profile(cmd[2])
+    end
+
+  elseif cmd[1] == 'list' or cmd[1] == 'l' then
+    list_profiles()
+
+  elseif cmd[1] == 'buffs' then
     print_active_buffs()
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then
     if cmd[2] == nil then
-      error('Invalid command. Try `bw search <buff>`')
+      error('Invalid command. Try `bw <find|search> <buff>`')
     else
       -- TODO slice the table 2:last to allow search terms with spaces and no quotes
       search(cmd[2])

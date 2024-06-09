@@ -38,6 +38,7 @@ config = require('config')
 res = require('resources')
 texts = require('texts')
 
+display_text = ''
 image = texts.new()
 colors = {
   white = '\\cs(255,255,255)',
@@ -62,7 +63,7 @@ windower.register_event('load', function()
       size = 11,
       stroke = {
         width = 2,
-        transparency = 192
+        transparency = 200
       }
     },
     pos = {
@@ -107,7 +108,7 @@ windower.register_event('load', function()
   image:size(settings.text.size)
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
-  image:right_justified(false)
+  image:bottom_justified(true)
 end)
 
 windower.register_event('unload', function()
@@ -122,25 +123,30 @@ windower.register_event('prerender', function()
 end)
 
 function update_text()
-  local buff_ids = windower.ffxi.get_player().buffs
-
-  image:text('')
-  for i, buff_id in ipairs(buff_ids) do
-    local buff = res.buffs[buff_id]
-    local color = colors.white
-
-    if buff ~= nil then
-      -- TODO: Make line red if buff is missing/inactive
-      if (i % 2 == 0) then
-        color = colors.red
-      end
-      -- TODO: Replace placeholder text with buffs from active profile
-      local line = string.format(' %s%s: %s\n', color, buff_id, buff.en)
-      image:append(line)
-    end
+  if active_profile == nil then
+    image:visible(false)
+    return
   end
 
+  display_text = ''
+  for _, buff in pairs(settings.profiles[active_profile]) do
+    -- local row_color = colors.white
+    -- if buff_is_active(buff.id) then
+    --   row_color = colors.green
+    -- else
+    --   row_color = colors.red
+    -- end
+    -- image:append(string.format(' %s%s\\cr\n', row_color, buff.label))
+
+    display_text = display_text .. buff.label .. '\n'
+  end
+  image:text(display_text)
   image:visible(true)
+end
+
+function buff_is_active(buff_id)
+  player = windower.ffxi.get_player()
+  return table.with(player.buffs, 'id', buff_id)
 end
 
 function get_buff_id(buff_name)

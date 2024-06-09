@@ -138,10 +138,11 @@ function update_text()
     return
   end
 
-  player = windower.ffxi.get_player()
+  local active_buffs_set = S(windower.ffxi.get_player().buffs)
+
   image:text('')
   for _, buff in pairs(settings.profiles[active_profile]) do
-    if player.buffs[buff_id] == nil then
+    if not active_buffs_set:contains(buff.id) then
       -- image:append(string.format(' %s\n', buff.label):text_color(255, 0, 0))
       image:append(buff.label .. '\n')
     end
@@ -218,9 +219,9 @@ function set_active_profile(profile_name)
 end
 
 function autodetect_job_profile()
-  player = windower.ffxi.get_player()
-  if settings.profiles[player.main_job:lower()] ~= nil then
-    set_active_profile(player.main_job:lower())
+  local job = windower.ffxi.get_player().main_job:lower()
+  if settings.profiles[job] ~= nil then
+    set_active_profile(job)
   end
 end
 
@@ -253,18 +254,23 @@ function print_active_profile()
 end
 
 function print_active_buffs()
-  player = windower.ffxi.get_player()
-  if table.length(player.buffs) == 0 then
+  local active_buffs = windower.ffxi.get_player().buffs
+
+  if table.length(active_buffs) == 0 then
     log('No active buffs to display')
     return
   end
   log('Currently active buffs:')
-  for i, buff_id in ipairs(player.buffs) do
+  for i, buff_id in ipairs(active_buffs) do
     local buff = res.buffs[buff_id]
     if buff ~= nil then
       log(string.format(' %d: %s', buff_id, buff.en))
     end
   end
+
+  -- print(table.concat(active_buffs, ', '))
+  -- print(table.find(active_buffs, 253))
+  -- print(S(active_buffs):contains(253))
 end
 
 function search(buff_name)

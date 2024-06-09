@@ -57,26 +57,42 @@ windower.register_event('load', function()
       visible = false,
       alpha = 128
     },
-    pos = {
-      x = 141,
-      y = 83
-    },
-    profiles = {
-      global = {
-        _618 = "Emporox's Gift"
-      },
-      pld = {
-        _116 = "Phalanx",
-        _93 = "Defense Boost", -- Cocoon
-        _289 = "Enmity Boost" -- Crusade
-      }
-    },
     text = {
       font = 'Arial',
       size = 11,
       stroke = {
         width = 2,
         transparency = 192
+      }
+    },
+    pos = {
+      x = 141,
+      y = 83
+    },
+    profiles = {
+      global = {
+        _618 = {
+          id = 618,
+          en = "Emporox's Gift",
+          label = "Potpourri"
+        }
+      },
+      pld = {
+        _116 = {
+          id = 116,
+          en = "Phalanx",
+          label = "Phalanx"
+        },
+        _93 = {
+          id = 93,
+          en = "Defense Boost",
+          label = "Cocoon"
+        },
+        _289 = {
+          id = 289,
+          en = "Enmity Boost",
+          label = "Crusade"
+        }
       }
     }
   }
@@ -135,7 +151,7 @@ function get_buff_id(buff_name)
   return res.buffs:with('en', buff_name).id
 end
 
-function add_buff(profile_name, buff_name)
+function add_buff(profile_name, buff_name, label)
   settings = config.load()
   -- Validate buff name
   local buff_id = get_buff_id(buff_name)
@@ -148,13 +164,18 @@ function add_buff(profile_name, buff_name)
     log(string.format('Profile `%s` created', profile_name))
   end
   -- Add buff to profile
-  if settings.profiles[profile_name]['_' .. buff_id] == nil then
-    settings.profiles[profile_name]['_' .. buff_id] = buff_name
-    log(string.format('Added %s (%d) to profile `%s`', buff_name, buff_id, profile_name))
-    settings:save('profiles')
-  else
-    log(string.format('Buff `%s` (%d) already exists in profile `%s`', buff_name, buff_id, profile_name))
+  label = label or buff_name
+  settings.profiles[profile_name]['_' .. buff_id] = {
+    id = buff_id,
+    en = buff_name,
+    label = label
+  }
+  local line = string.format('Added %s (%d) to profile `%s`', buff_name, buff_id, profile_name)
+  if label ~= buff_name then
+    line = string.format('%s with a label of `%s`', line, label)
   end
+  log(line)
+  settings:save('profiles')
 end
 
 function remove_buff(profile_name, buff_name)
@@ -243,7 +264,7 @@ windower.register_event('addon command', function(...)
     if cmd[2] == nil or cmd[3] == nil then
       error('Invalid command. Try `bw <add|a> <profile> <buff>`')
     else
-      add_buff(cmd[2], cmd[3])
+      add_buff(cmd[2], cmd[3], cmd[4] or nil)
     end
 
   elseif cmd[1] == 'remove' or cmd[1] == 'r' then

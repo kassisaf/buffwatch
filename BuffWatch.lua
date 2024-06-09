@@ -99,6 +99,8 @@ windower.register_event('load', function()
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
   image:bottom_justified(true)
+
+  autodetect_job_profile()
 end)
 
 windower.register_event('unload', function()
@@ -108,8 +110,24 @@ windower.register_event('unload', function()
   settings:save('all')
 end)
 
-windower.register_event('prerender', function()
-  -- TODO: render once initially and again on 'gain buff', 'lose buff', 'zone change' events instead of prerender
+windower.register_event('job change', function()
+  autodetect_job_profile()
+end)
+
+-- windower.register_event('gain buff', function(buff_id)
+--   update_text()
+-- end)
+
+-- windower.register_event('lose buff', function(buff_id)
+--   update_text()
+-- end)
+
+-- windower.register_event('zone change', function(buff_id)
+--   update_text()
+-- end)
+
+windower.register_event('prerender', function(buff_id)
+  -- TODO only update text if the player's buffs have changed (gain/lose buff, zone change, etc.)
   -- https://github.com/Windower/Lua/wiki/Events
   update_text()
 end)
@@ -197,6 +215,13 @@ function set_active_profile(profile_name)
   end
   active_profile = profile_name
   log(string.format('Active profile set to `%s`', profile_name))
+end
+
+function autodetect_job_profile()
+  player = windower.ffxi.get_player()
+  if settings.profiles[player.main_job:lower()] ~= nil then
+    set_active_profile(player.main_job:lower())
+  end
 end
 
 function list_profiles()
@@ -299,6 +324,11 @@ windower.register_event('addon command', function(...)
       -- TODO slice the table 2:last to allow search terms with spaces and no quotes
       search(cmd[2])
     end
+
+  elseif cmd[1] == 'reset' then
+    active_profile = nil
+    image:text('')
+    image:visible(false)
 
   end
 end)

@@ -107,6 +107,7 @@ windower.register_event('load', function()
   image:bottom_justified(true)
 
   autodetect_job_profile()
+  update_text()
 end)
 
 windower.register_event('unload', function()
@@ -292,7 +293,15 @@ windower.register_event('addon command', function(...)
 
   if cmd[1] == 'help' then
     -- TODO: Document available commands once things are more stable
-    log('Available commands:\n...\nj/k lol')
+    local chat = windower.add_to_chat
+    log('Available commands:')
+    chat(207, 'add|a <profile> <buff_name> [label]' .. ': Add a buff to a profile')
+    chat(207, 'remove|r <profile> <buff_name>' .. ': Remove a buff from a profile')
+    chat(207, 'set|s <profile>' .. ': Set active profile')
+    chat(207, 'list|l' .. ': List available profiles and number of buffs tracked')
+    chat(207, 'reset' .. ': Clear active profile and hide the display')
+    chat(207, 'find|search <buff_name>' .. ': Search for a buff by name')
+    chat(207, 'debug' .. ': Prints active profile details and active buffs')
 
   elseif cmd[1] == 'add' or cmd[1] == 'a' then
     if cmd[2] == nil or cmd[3] == nil then
@@ -318,9 +327,9 @@ windower.register_event('addon command', function(...)
   elseif cmd[1] == 'list' or cmd[1] == 'l' then
     list_profiles()
 
-  elseif cmd[1] == 'debug' then
-    print_active_profile()
-    print_active_buffs()
+  elseif cmd[1] == 'reset' then
+    active_profile = nil
+    image:text('')
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then
     if cmd[2] == nil then
@@ -330,9 +339,9 @@ windower.register_event('addon command', function(...)
       search(cmd[2])
     end
 
-  elseif cmd[1] == 'reset' then
-    active_profile = nil
-    image:text('')
+  elseif cmd[1] == 'debug' then
+    print_active_profile()
+    print_active_buffs()
 
   end
 end)

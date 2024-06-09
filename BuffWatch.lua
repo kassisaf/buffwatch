@@ -39,8 +39,8 @@ config = require('config')
 res = require('resources')
 texts = require('texts')
 
-image = texts.new()
-active_profile = nil
+local image = texts.new()
+local active_profile = nil
 
 windower.register_event('load', function()
   defaults = T {
@@ -54,6 +54,11 @@ windower.register_event('load', function()
       stroke = {
         width = 2,
         transparency = 200
+      },
+      color = {
+        r = 255,
+        g = 0,
+        b = 0
       }
     },
     pos = {
@@ -96,6 +101,7 @@ windower.register_event('load', function()
   image:pos_y(settings.pos.y)
   image:font(settings.text.font)
   image:size(settings.text.size)
+  image:color(settings.text.color.r, settings.text.color.g, settings.text.color.b)
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
   image:bottom_justified(true)
@@ -114,22 +120,18 @@ windower.register_event('job change', function()
   autodetect_job_profile()
 end)
 
--- windower.register_event('gain buff', function(buff_id)
---   update_text()
--- end)
-
--- windower.register_event('lose buff', function(buff_id)
---   update_text()
--- end)
-
--- windower.register_event('zone change', function(buff_id)
---   update_text()
--- end)
-
-windower.register_event('prerender', function(buff_id)
-  -- TODO only update text if the player's buffs have changed (gain/lose buff, zone change, etc.)
-  -- https://github.com/Windower/Lua/wiki/Events
+-- Update buff text only when the player's buffs have changed
+windower.register_event('gain buff', function(buff_id)
   update_text()
+end)
+
+windower.register_event('lose buff', function(buff_id)
+  update_text()
+end)
+
+-- Prerender should avoid anything complex or slow
+windower.register_event('prerender', function(buff_id)
+  image:visible(active_profile ~= nil)
 end)
 
 function update_text()
@@ -138,6 +140,7 @@ function update_text()
     return
   end
 
+  -- TODO: instead of set conversion, would it be faster to use `table.find(active_buffs, buff_id)`?
   local active_buffs_set = S(windower.ffxi.get_player().buffs)
 
   image:text('')
@@ -267,10 +270,6 @@ function print_active_buffs()
       log(string.format(' %d: %s', buff_id, buff.en))
     end
   end
-
-  -- print(table.concat(active_buffs, ', '))
-  -- print(table.find(active_buffs, 253))
-  -- print(S(active_buffs):contains(253))
 end
 
 function search(buff_name)
@@ -334,7 +333,6 @@ windower.register_event('addon command', function(...)
   elseif cmd[1] == 'reset' then
     active_profile = nil
     image:text('')
-    image:visible(false)
 
   end
 end)

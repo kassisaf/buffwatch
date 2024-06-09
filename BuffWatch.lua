@@ -43,7 +43,7 @@ image = texts.new()
 active_profile = nil
 
 windower.register_event('load', function()
-  defaults = {
+  defaults = T {
     background = {
       visible = false,
       alpha = 128
@@ -105,10 +105,12 @@ windower.register_event('unload', function()
   settings = config.load()
   settings.pos.x = image:pos_x()
   settings.pos.y = image:pos_y()
-  settings:save('pos')
+  settings:save('all')
 end)
 
 windower.register_event('prerender', function()
+  -- TODO: render once initially and again on 'gain buff', 'lose buff', 'zone change' events instead of prerender
+  -- https://github.com/Windower/Lua/wiki/Events
   update_text()
 end)
 
@@ -161,7 +163,7 @@ function add_buff(profile_name, buff_name, label)
     line = string.format('%s with a label of `%s`', line, label)
   end
   log(line)
-  settings:save('profiles')
+  settings:save('all')
 end
 
 function remove_buff(profile_name, buff_name)
@@ -181,7 +183,7 @@ function remove_buff(profile_name, buff_name)
       settings.profiles[profile_name] = nil
       log(string.format('Profile `%s` removed because it was empty', profile_name))
     end
-    settings:save('profiles')
+    settings:save('all')
   else
     error(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
   end

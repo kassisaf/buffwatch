@@ -97,7 +97,7 @@ windower.register_event('unload', function()
   settings = config.load()
   settings.pos.x = image:pos_x()
   settings.pos.y = image:pos_y()
-  settings:save('all')
+  settings:save('pos')
 end)
 
 windower.register_event('prerender', function()
@@ -120,27 +120,6 @@ windower.register_event('prerender', function()
   end
 
   image:visible(true)
-end)
-
-windower.register_event('addon command', function(...)
-  cmd = {
-    ...
-  }
-  if cmd[1] == 'help' then
-    -- TODO: Add help text
-  elseif cmd[1] == 'add' then
-    if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw add <profile> <buff>`')
-    else
-      add_buff(cmd[2], cmd[3])
-    end
-  elseif cmd[1] == 'remove' or cmd[1] == 'rm' then
-    if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw remove <profile> <buff>`')
-    else
-      remove_buff(cmd[2], cmd[3])
-    end
-  end
 end)
 
 function get_buff_id(buff_name)
@@ -195,3 +174,68 @@ function remove_buff(profile_name, buff_name)
     log(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
   end
 end
+
+function print_active_buffs()
+  player = windower.ffxi.get_player()
+  if table.length(player.buffs) == 0 then
+    log('No active buffs to display')
+    return
+  end
+  log('Currently active buffs:')
+  for i, buff_id in ipairs(player.buffs) do
+    local buff = res.buffs[buff_id]
+    if buff ~= nil then
+      log(string.format('%d: %s', buff_id, buff.en))
+    end
+  end
+end
+
+function search(buff_name)
+  found = false
+  for i, buff in pairs(res.buffs) do
+    if buff.en:lower():find(buff_name:lower()) then
+      log(string.format('%d: %s', buff.id, buff.en))
+      found = true
+    end
+  end
+  if not found then
+    log(string.format('No buffs found matching `%s`', buff_name))
+  end
+end
+
+windower.register_event('addon command', function(...)
+  cmd = {
+    ...
+  }
+
+  if cmd[1] == 'help' then
+    -- TODO: Document available commands once things are more stable
+    log('Available commands:\n...\nj/k lol')
+
+  elseif cmd[1] == 'add' or cmd[1] == 'a' then
+    if cmd[2] == nil or cmd[3] == nil then
+      error('Invalid command. Try `bw add <profile> <buff>`')
+    else
+      add_buff(cmd[2], cmd[3])
+    end
+
+  elseif cmd[1] == 'remove' or cmd[1] == 'rm' then
+    if cmd[2] == nil or cmd[3] == nil then
+      error('Invalid command. Try `bw remove <profile> <buff>`')
+    else
+      remove_buff(cmd[2], cmd[3])
+    end
+
+  elseif cmd[1] == 'active' then
+    print_active_buffs()
+
+  elseif cmd[1] == 'find' or cmd[1] == 'search' then
+    if cmd[2] == nil then
+      error('Invalid command. Try `bw search <buff>`')
+    else
+      -- TODO slice the table 2:last to allow search terms with spaces and no quotes
+      search(cmd[2])
+    end
+
+  end
+end)

@@ -33,23 +33,13 @@ _addon.commands = {
   'bw'
 }
 
+require('chat')
 require('logger')
 config = require('config')
 res = require('resources')
 texts = require('texts')
 
-display_text = ''
 image = texts.new()
-colors = {
-  white = '\\cs(255,255,255)',
-  red = '\\cs(255,0,0)',
-  green = '\\cs(0,255,0)',
-  blue = '\\cs(0,0,255)',
-  yellow = '\\cs(255,255,0)',
-  cyan = '\\cs(0,255,255)',
-  magenta = '\\cs(255,0,255)',
-  black = '\\cs(0,0,0)'
-}
 active_profile = nil
 
 windower.register_event('load', function()
@@ -128,25 +118,15 @@ function update_text()
     return
   end
 
-  display_text = ''
-  for _, buff in pairs(settings.profiles[active_profile]) do
-    -- local row_color = colors.white
-    -- if buff_is_active(buff.id) then
-    --   row_color = colors.green
-    -- else
-    --   row_color = colors.red
-    -- end
-    -- image:append(string.format(' %s%s\\cr\n', row_color, buff.label))
-
-    display_text = display_text .. buff.label .. '\n'
-  end
-  image:text(display_text)
-  image:visible(true)
-end
-
-function buff_is_active(buff_id)
   player = windower.ffxi.get_player()
-  return table.with(player.buffs, 'id', buff_id)
+  image:text('')
+  for _, buff in pairs(settings.profiles[active_profile]) do
+    if player.buffs[buff_id] == nil then
+      -- image:append(string.format(' %s\n', buff.label):text_color(255, 0, 0))
+      image:append(buff.label .. '\n')
+    end
+  end
+  image:visible(true)
 end
 
 function get_buff_id(buff_name)
@@ -229,6 +209,22 @@ function list_profiles()
   end
 end
 
+function print_active_profile()
+  if active_profile == nil then
+    log('No active profile set')
+    return
+  end
+  log(string.format('Active profile: %s, watching the following buffs:', active_profile))
+
+  for _, buff in pairs(settings.profiles[active_profile]) do
+    local line = (string.format(' %d: %s', buff.id, buff.en))
+    if buff.label ~= buff.en then
+      line = line .. string.format(' as `%s`', buff.label)
+    end
+    log(line)
+  end
+end
+
 function print_active_buffs()
   player = windower.ffxi.get_player()
   if table.length(player.buffs) == 0 then
@@ -290,7 +286,8 @@ windower.register_event('addon command', function(...)
   elseif cmd[1] == 'list' or cmd[1] == 'l' then
     list_profiles()
 
-  elseif cmd[1] == 'buffs' then
+  elseif cmd[1] == 'debug' then
+    print_active_profile()
     print_active_buffs()
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then

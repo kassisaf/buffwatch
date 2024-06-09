@@ -42,6 +42,41 @@ texts = require('texts')
 local image = texts.new()
 local active_profile = nil
 
+local help_text = {
+  {
+    command = 'add|a <profile> <buff_name> [label]',
+    description = 'Add a buff to a profile'
+  },
+  {
+    command = 'remove|r <profile> <buff_name>',
+    description = 'Remove a buff from a profile'
+  },
+  {
+    command = 'set|s <profile>',
+    description = 'Set active profile'
+  },
+  {
+    command = 'list|l',
+    description = 'List available profiles and number of buffs tracked'
+  },
+  {
+    command = 'reset',
+    description = 'Clear active profile and hide the display'
+  },
+  {
+    command = 'find|search <buff_name>',
+    description = 'Search for a buff by name'
+  },
+  {
+    command = 'debug',
+    description = 'Prints active profile details and active buffs'
+  },
+  {
+    command = 'help',
+    description = 'Prints this help message'
+  }
+}
+
 windower.register_event('load', function()
   defaults = T {
     background = {
@@ -227,6 +262,8 @@ function autodetect_job_profile()
   if settings.profiles[job] ~= nil then
     set_active_profile(job)
   end
+  -- TODO if active_profile is a job profile that no longer matches the player's job, clear it
+
 end
 
 function list_profiles()
@@ -295,26 +332,22 @@ windower.register_event('addon command', function(...)
     -- TODO: Document available commands once things are more stable
     local chat = windower.add_to_chat
     log('Available commands:')
-    chat(207, 'add|a <profile> <buff_name> [label]' .. ': Add a buff to a profile')
-    chat(207, 'remove|r <profile> <buff_name>' .. ': Remove a buff from a profile')
-    chat(207, 'set|s <profile>' .. ': Set active profile')
-    chat(207, 'list|l' .. ': List available profiles and number of buffs tracked')
-    chat(207, 'reset' .. ': Clear active profile and hide the display')
-    chat(207, 'find|search <buff_name>' .. ': Search for a buff by name')
-    chat(207, 'debug' .. ': Prints active profile details and active buffs')
+    for _, command in pairs(help_text) do
+      windower.add_to_chat(227, string.format(' %s: %s', command.command, command.description))
+    end
 
   elseif cmd[1] == 'add' or cmd[1] == 'a' then
     if cmd[2] == nil or cmd[3] == nil then
       error('Invalid command. Try `bw <add|a> <profile> <buff>`')
     else
-      add_buff(cmd[2], cmd[3], cmd[4] or nil)
+      add_buff(cmd[2], windower.convert_auto_trans(cmd[3]), cmd[4] or nil)
     end
 
   elseif cmd[1] == 'remove' or cmd[1] == 'r' then
     if cmd[2] == nil or cmd[3] == nil then
       error('Invalid command. Try `bw <remove|r> <profile> <buff>`')
     else
-      remove_buff(cmd[2], cmd[3])
+      remove_buff(cmd[2], windower.convert_auto_trans(cmd[3]))
     end
 
   elseif cmd[1] == 'set' or cmd[1] == 's' then
@@ -336,7 +369,7 @@ windower.register_event('addon command', function(...)
       error('Invalid command. Try `bw <find|search> <buff>`')
     else
       -- TODO slice the table 2:last to allow search terms with spaces and no quotes
-      search(cmd[2])
+      search(windower.convert_auto_trans(cmd[2]))
     end
 
   elseif cmd[1] == 'debug' then

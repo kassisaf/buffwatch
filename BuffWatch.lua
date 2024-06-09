@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]] --
 _addon.name = 'BuffWatch'
 _addon.author = 'Zuri'
-_addon.version = '0.1'
+_addon.version = '0.2'
 _addon.commands = {
   'buffwatch',
   'bw'
@@ -105,7 +105,6 @@ windower.register_event('load', function()
   image:color(settings.text.color.r, settings.text.color.g, settings.text.color.b)
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
-  image:bottom_justified(true)
 
   autodetect_job_profile()
   update_text()
@@ -153,13 +152,10 @@ function update_text()
     return
   end
 
-  -- TODO: instead of set conversion, would it be faster to use `table.find(active_buffs, buff_id)`?
-  local active_buffs_set = S(windower.ffxi.get_player().buffs)
-
   image:text('')
+  local active_buffs = windower.ffxi.get_player().buffs
   for _, buff in pairs(settings.profiles[active_profile]) do
-    if not active_buffs_set:contains(buff.id) then
-      -- image:append(string.format(' %s\n', buff.label):text_color(255, 0, 0))
+    if not table.find(active_buffs, buff_id) then
       image:append(buff.label .. '\n')
     end
   end

@@ -42,41 +42,6 @@ texts = require('texts')
 local image = texts.new()
 local active_profile = nil
 
-local help_text = {
-  {
-    command = 'add|a <profile> <buff_name> [label]',
-    description = 'Add a buff to a profile'
-  },
-  {
-    command = 'remove|r <profile> <buff_name>',
-    description = 'Remove a buff from a profile'
-  },
-  {
-    command = 'set|s <profile>',
-    description = 'Set active profile'
-  },
-  {
-    command = 'list|l',
-    description = 'List available profiles and number of buffs tracked'
-  },
-  {
-    command = 'reset',
-    description = 'Clear active profile and hide the display'
-  },
-  {
-    command = 'find|search <buff_name>',
-    description = 'Search for a buff by name'
-  },
-  {
-    command = 'debug',
-    description = 'Prints active profile details and active buffs'
-  },
-  {
-    command = 'help',
-    description = 'Prints this help message'
-  }
-}
-
 windower.register_event('load', function()
   defaults = T {
     background = {
@@ -125,7 +90,8 @@ windower.register_event('load', function()
           label = "Crusade"
         }
       }
-    }
+    },
+    detect_job_profiles = true
   }
   settings = config.load(defaults)
   settings:save('all')
@@ -152,10 +118,6 @@ windower.register_event('unload', function()
   settings:save('all')
 end)
 
-windower.register_event('job change', function()
-  autodetect_job_profile()
-end)
-
 -- Update buff text only when the player's buffs have changed
 windower.register_event('gain buff', function(buff_id)
   update_text()
@@ -168,6 +130,21 @@ end)
 -- Prerender should avoid anything complex or slow
 windower.register_event('prerender', function(buff_id)
   image:visible(active_profile ~= nil)
+end)
+
+windower.register_event('job change', function()
+  settings = config.load()
+  if not settings.detect_job_profiles then
+    return
+  end
+
+  autodetect_job_profile()
+  -- If active_profile is a job profile and we just changed jobs to something else, clear it
+  local main_job = windower.ffxi.get_player().main_job:lower()
+  if active_profile ~= nil and active_profile ~= main_job and res.jobs:with('ens', active_profile:upper()) then
+    log(string.format('Active profile will be reset since `%s` no longer matches main job (%s)', active_profile, main_job))
+    active_profile = nil
+  end
 end)
 
 function update_text()
@@ -258,15 +235,19 @@ function set_active_profile(profile_name)
 end
 
 function autodetect_job_profile()
-  local job = windower.ffxi.get_player().main_job:lower()
-  if settings.profiles[job] ~= nil then
-    set_active_profile(job)
+  settings = config.load()
+  if not settings.detect_job_profiles then
+    return
   end
-  -- TODO if active_profile is a job profile that no longer matches the player's job, clear it
 
+  local main_job = windower.ffxi.get_player().main_job:lower()
+  if settings.profiles[main_job] ~= nil and active_profile ~= main_job then
+    set_active_profile(main_job)
+  end
+  update_text()
 end
 
-function list_profiles()
+function print_profile_list()
   settings = config.load()
   log('Available profiles and number of buffs tracked:')
   for profile_name, profile in pairs(settings.profiles) do
@@ -310,6 +291,44 @@ function print_active_buffs()
   end
 end
 
+function print_help_text()
+  local help_text = {
+    {
+      syntax = '[a]dd <profile> <buff name> [label]',
+      description = 'Add a buff'
+    },
+    {
+      syntax = '[r]emove <profile> <buff name>',
+      description = 'Remove a buff'
+    },
+    {
+      syntax = '[s]et <profile>',
+      description = 'Set active profile'
+    },
+    {
+      syntax = '[l]ist',
+      description = 'List available profiles'
+    },
+    {
+      syntax = 'reset',
+      description = 'Clear active profile'
+    },
+    {
+      syntax = '[find OR search] <buff name>',
+      description = 'Search for a buff by name'
+    },
+    {
+      syntax = 'debug',
+      description = 'Print info about active profile and active buffs'
+    }
+  }
+
+  log('Available commands:')
+  for _, command in pairs(help_text) do
+    windower.add_to_chat(207, string.format(' %s: %s', command.syntax, command.description))
+  end
+end
+
 function search(buff_name)
   local found = false
   for i, buff in pairs(res.buffs) do
@@ -329,12 +348,7 @@ windower.register_event('addon command', function(...)
   }
 
   if cmd[1] == 'help' then
-    -- TODO: Document available commands once things are more stable
-    local chat = windower.add_to_chat
-    log('Available commands:')
-    for _, command in pairs(help_text) do
-      windower.add_to_chat(227, string.format(' %s: %s', command.command, command.description))
-    end
+    print_help_text()
 
   elseif cmd[1] == 'add' or cmd[1] == 'a' then
     if cmd[2] == nil or cmd[3] == nil then
@@ -358,7 +372,7 @@ windower.register_event('addon command', function(...)
     end
 
   elseif cmd[1] == 'list' or cmd[1] == 'l' then
-    list_profiles()
+    print_profile_list()
 
   elseif cmd[1] == 'reset' then
     active_profile = nil

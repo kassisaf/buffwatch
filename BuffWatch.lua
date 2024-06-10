@@ -46,6 +46,7 @@ local colors = {
   red = '\\cs(255,0,0)',
   white = '\\cs(255,255,255)'
 }
+local display_text = ''
 
 windower.register_event('load', function()
   defaults = T {
@@ -147,27 +148,22 @@ windower.register_event('job change', function()
 end)
 
 function update_text()
-  if active_profile == nil then
-    image:visible(false)
-    return
-  end
-
-  image:text('')
+  display_text = ''
   local active_buffs = windower.ffxi.get_player().buffs
   for _, buff in pairs(settings.profiles[active_profile]) do
     if not table.find(active_buffs, buff.id) then
-      image:append(string.format(' %s\n', buff.label))
+      display_text = string.format('%s %s\n', display_text, buff.label)
     end
   end
 
   settings = config.load()
-  if settings.show_ok_message and table.length(settings.profiles[active_profile]) and image:text() == '' then
-    image:text(string.format(' %sBuffs OK', colors.green))
+  if settings.show_ok_message and table.length(settings.profiles[active_profile]) and display_text == '' then
+    display_text = string.format(' %sBuffs OK', colors.green)
   else
-    image:text(string.format(' %sMissing:%s\n%s', colors.white, colors.red, image:text()))
+    display_text = string.format(' %sMissing:%s\n%s', colors.white, colors.red, display_text)
   end
 
-  image:visible(true)
+  image:text(display_text)
 end
 
 function get_buff_id(buff_name)
@@ -236,7 +232,7 @@ function set_active_profile(profile_name)
   end
   active_profile = profile_name
   log(string.format('Active profile set to `%s`', profile_name))
-  refresh_text()
+  update_text()
 end
 
 function autodetect_job_profile()

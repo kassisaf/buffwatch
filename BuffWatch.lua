@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]] --
 _addon.name = 'BuffWatch'
 _addon.author = 'Zuri'
-_addon.version = '0.2'
+_addon.version = '0.3'
 _addon.commands = {
   'buffwatch',
   'bw'
@@ -236,6 +236,7 @@ function set_active_profile(profile_name)
   end
   active_profile = profile_name
   log(string.format('Active profile set to `%s`', profile_name))
+  refresh_text()
 end
 
 function autodetect_job_profile()

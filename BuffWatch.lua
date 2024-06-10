@@ -148,6 +148,10 @@ windower.register_event('job change', function()
 end)
 
 function update_text()
+  if active_profile == nil then
+    return
+  end
+
   display_text = ''
   local active_buffs = windower.ffxi.get_player().buffs
   for _, buff in pairs(settings.profiles[active_profile]) do

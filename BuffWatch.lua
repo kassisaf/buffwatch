@@ -41,6 +41,11 @@ texts = require('texts')
 
 local image = texts.new()
 local active_profile = nil
+local colors = {
+  green = '\\cs(0,255,0)',
+  red = '\\cs(255,0,0)',
+  white = '\\cs(255,255,255)'
+}
 
 windower.register_event('load', function()
   defaults = T {
@@ -54,11 +59,6 @@ windower.register_event('load', function()
       stroke = {
         width = 2,
         transparency = 200
-      },
-      color = {
-        r = 255,
-        g = 0,
-        b = 0
       }
     },
     pos = {
@@ -91,7 +91,8 @@ windower.register_event('load', function()
         }
       }
     },
-    detect_job_profiles = true
+    detect_job_profiles = true,
+    show_ok_message = true
   }
   settings = config.load(defaults)
   settings:save('all')
@@ -102,7 +103,6 @@ windower.register_event('load', function()
   image:pos_y(settings.pos.y)
   image:font(settings.text.font)
   image:size(settings.text.size)
-  image:color(settings.text.color.r, settings.text.color.g, settings.text.color.b)
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
 
@@ -155,10 +155,18 @@ function update_text()
   image:text('')
   local active_buffs = windower.ffxi.get_player().buffs
   for _, buff in pairs(settings.profiles[active_profile]) do
-    if not table.find(active_buffs, buff_id) then
-      image:append(buff.label .. '\n')
+    if not table.find(active_buffs, buff.id) then
+      image:append(string.format(' %s\n', buff.label))
     end
   end
+
+  settings = config.load()
+  if settings.show_ok_message and table.length(settings.profiles[active_profile]) and image:text() == '' then
+    image:text(string.format(' %sBuffs OK', colors.green))
+  else
+    image:text(string.format(' %sMissing:%s\n%s', colors.white, colors.red, image:text()))
+  end
+
   image:visible(true)
 end
 

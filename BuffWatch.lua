@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]] --
 _addon.name = 'BuffWatch'
 _addon.author = 'Zuri'
-_addon.version = '0.3'
+_addon.version = '0.3.1'
 _addon.commands = {
   'buffwatch',
   'bw'
@@ -199,6 +199,10 @@ function add_buff(profile_name, buff_name, label)
   end
   log(line)
   settings:save('all')
+
+  if active_profile == profile_name then
+    update_text()
+  end
 end
 
 function remove_buff(profile_name, buff_name)
@@ -221,6 +225,10 @@ function remove_buff(profile_name, buff_name)
     settings:save('all')
   else
     error(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
+  end
+
+  if active_profile == profile_name then
+    update_text()
   end
 end
 

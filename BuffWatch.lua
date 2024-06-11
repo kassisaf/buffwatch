@@ -139,6 +139,14 @@ windower.register_event('job change', function()
   autodetect_job_profile()
 end)
 
+windower.register_event('login', function()
+  autodetect_job_profile()
+end)
+
+windower.register_event('logout', function()
+  clear_active_profile()
+end)
+
 function update_text()
   if active_profile == nil then
     return
@@ -246,6 +254,10 @@ function autodetect_job_profile()
   end
 
   local player = windower.ffxi.get_player()
+  if player == nil then
+    return -- Not logged in
+  end
+
   local main_job = player.main_job:lower()
   local sub_job = player.sub_job
 

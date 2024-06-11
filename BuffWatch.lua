@@ -68,14 +68,12 @@ windower.register_event('load', function()
       y = 83
     },
     profiles = {
-      global = {
+      example = {
         _618 = {
           id = 618,
           en = "Emporox's Gift",
           label = "Potpourri"
-        }
-      },
-      pld = {
+        },
         _116 = {
           id = 116,
           en = "Phalanx",
@@ -111,7 +109,6 @@ windower.register_event('load', function()
 
   -- Populate job table from resources
   for _, job in pairs(res.jobs) do
-    jobs[job.ens] = true
     jobs[job.ens:lower()] = true
   end
 
@@ -251,15 +248,13 @@ function autodetect_job_profile()
   local player = windower.ffxi.get_player()
   local main_job = player.main_job:lower()
   local sub_job = player.sub_job
-  if sub_job then
-    sub_job = sub_job:lower()
-  end
 
   -- If a profile exists for our current main and subjob, switch to it
   if sub_job then
-    local full_job_profile = string.format('%s_%s', main_job, sub_job)
-    if settings.profiles[full_job_profile] ~= nil and active_profile ~= full_job_profile then
-      set_active_profile(full_job_profile)
+    sub_job = sub_job:lower()
+    local full_job = string.format('%s_%s', main_job, sub_job)
+    if settings.profiles[full_job] ~= nil and active_profile ~= full_job then
+      set_active_profile(full_job)
       return
     end
   end
@@ -275,10 +270,10 @@ function autodetect_job_profile()
   end
 
   local switched_from_main_job_profile = is_valid_main_job(active_profile) and active_profile ~= main_job
-  local switched_from_full_job_profile = sub_job and is_valid_full_job(active_profile) and active_profile ~= string.format('%s_%s', main_job, sub_job)
+  local switched_from_full_job_profile = sub_job and is_valid_full_job(active_profile) and active_profile ~= full_job
 
   if switched_from_main_job_profile or switched_from_full_job_profile then
-    log(string.format('Active profile reset because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
+    log(string.format('Active profile cleared because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
     clear_active_profile()
   end
 end

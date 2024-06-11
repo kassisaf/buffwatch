@@ -46,6 +46,7 @@ local colors = {
   red = '\\cs(255,0,0)',
   white = '\\cs(255,255,255)'
 }
+local jobs = {}
 local display_text = ''
 
 windower.register_event('load', function()
@@ -92,9 +93,10 @@ windower.register_event('load', function()
         }
       }
     },
-    detect_job_profiles = true,
+    auto_swap_job_profiles = true,
     show_ok_message = true
   }
+
   settings = config.load(defaults)
   settings:save('all')
 
@@ -107,6 +109,12 @@ windower.register_event('load', function()
   image:stroke_width(settings.text.stroke.width)
   image:stroke_transparency(settings.text.stroke.transparency)
 
+  -- Populate job table from resources
+  for _, job in pairs(res.jobs) do
+    jobs[job.ens] = true
+    jobs[job.ens:lower()] = true
+  end
+
   autodetect_job_profile()
   update_text()
 end)
@@ -118,7 +126,6 @@ windower.register_event('unload', function()
   settings:save('all')
 end)
 
--- Update buff text only when the player's buffs have changed
 windower.register_event('gain buff', function(buff_id)
   update_text()
 end)
@@ -127,24 +134,12 @@ windower.register_event('lose buff', function(buff_id)
   update_text()
 end)
 
--- Prerender should avoid anything complex or slow
 windower.register_event('prerender', function(buff_id)
   image:visible(active_profile ~= nil)
 end)
 
 windower.register_event('job change', function()
-  settings = config.load()
-  if not settings.detect_job_profiles then
-    return
-  end
-
   autodetect_job_profile()
-  -- If active_profile is a job profile and we just changed jobs to something else, clear it
-  local main_job = windower.ffxi.get_player().main_job:lower()
-  if active_profile ~= nil and active_profile ~= main_job and res.jobs:with('ens', active_profile:upper()) then
-    log(string.format('Active profile will be reset since `%s` no longer matches main job (%s)', active_profile, main_job))
-    active_profile = nil
-  end
 end)
 
 function update_text()
@@ -249,15 +244,56 @@ end
 
 function autodetect_job_profile()
   settings = config.load()
-  if not settings.detect_job_profiles then
+  if settings.auto_swap_job_profiles == false then
+    return -- User disabled this behavior
+  end
+
+  local player = windower.ffxi.get_player()
+  local main_job = player.main_job:lower()
+  local sub_job = player.sub_job
+  if sub_job then
+    sub_job = sub_job:lower()
+  end
+
+  -- If a profile exists for our current main and subjob, switch to it
+  if sub_job then
+    local full_job_profile = string.format('%s_%s', main_job, sub_job)
+    if settings.profiles[full_job_profile] ~= nil and active_profile ~= full_job_profile then
+      set_active_profile(full_job_profile)
+      return
+    end
+  end
+  -- If a profile exists for our current main job, switch to it
+  if settings.profiles[main_job] ~= nil and active_profile ~= main_job then
+    set_active_profile(main_job)
     return
   end
 
-  local main_job = windower.ffxi.get_player().main_job:lower()
-  if settings.profiles[main_job] ~= nil and active_profile ~= main_job then
-    set_active_profile(main_job)
+  -- If the active profile is a job profile and no longer matches the current job, reset it
+  if active_profile == nil then
+    return -- nothing to do
   end
-  update_text()
+
+  local switched_from_main_job_profile = is_valid_main_job(active_profile) and active_profile ~= main_job
+  local switched_from_full_job_profile = sub_job and is_valid_full_job(active_profile) and active_profile ~= string.format('%s_%s', main_job, sub_job)
+
+  if switched_from_main_job_profile or switched_from_full_job_profile then
+    log(string.format('Active profile reset because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
+    clear_active_profile()
+  end
+end
+
+function clear_active_profile()
+  active_profile = nil
+  image:text('')
+end
+
+function is_valid_main_job(job)
+  return jobs[job]
+end
+
+function is_valid_full_job(job)
+  return job:find('_') and jobs[job:split('_')[1]] and jobs[job:split('_')[2]]
 end
 
 function print_profile_list()
@@ -365,21 +401,21 @@ windower.register_event('addon command', function(...)
 
   elseif cmd[1] == 'add' or cmd[1] == 'a' then
     if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw <add|a> <profile> <buff>`')
+      error('Invalid command. Try `bw [a]dd <profile> <buff> [label]`')
     else
       add_buff(cmd[2], windower.convert_auto_trans(cmd[3]), cmd[4] or nil)
     end
 
   elseif cmd[1] == 'remove' or cmd[1] == 'r' then
     if cmd[2] == nil or cmd[3] == nil then
-      error('Invalid command. Try `bw <remove|r> <profile> <buff>`')
+      error('Invalid command. Try `bw [r]emove <profile> <buff>`')
     else
       remove_buff(cmd[2], windower.convert_auto_trans(cmd[3]))
     end
 
   elseif cmd[1] == 'set' or cmd[1] == 's' then
     if cmd[2] == nil then
-      error('Invalid command. Try `bw <set|s> <profile>`')
+      error('Invalid command. Try `bw [s]et <profile>`')
     else
       set_active_profile(cmd[2])
     end
@@ -388,8 +424,7 @@ windower.register_event('addon command', function(...)
     print_profile_list()
 
   elseif cmd[1] == 'reset' then
-    active_profile = nil
-    image:text('')
+    clear_active_profile()
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then
     if cmd[2] == nil then

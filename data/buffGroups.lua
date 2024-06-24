@@ -45,6 +45,11 @@ local HASTE_FLURRY = {
   flurry = 581
 }
 
+local RERAISES = {
+  reraise = 113,
+  hymnus = 218
+}
+
 local RUNES = {
   ignis = 523,
   gelus = 524,
@@ -60,6 +65,15 @@ local SAMBAS = {
   drain = 368,
   aspir = 369,
   haste = 370
+}
+
+local SHADOWS = {
+  blink = 36,
+  copy_image_1 = 66,
+  third_eye = 67,
+  copy_image_2 = 444,
+  copy_image_3 = 445,
+  copy_image_4 = 446
 }
 
 local SPIKES = {

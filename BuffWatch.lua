@@ -48,6 +48,7 @@ local colors = {
 }
 local jobs = {}
 local display_text = ''
+local global_profile = 'global'
 
 windower.register_event('load', function()
   defaults = T {
@@ -92,6 +93,7 @@ windower.register_event('load', function()
       }
     },
     auto_swap_job_profiles = true,
+    default_to_global_profile = true,
     show_ok_message = true
   }
 
@@ -113,6 +115,10 @@ windower.register_event('load', function()
   end
 
   autodetect_job_profile()
+  if active_profile == nil and settings.default_to_global_profile and settings.profiles.global then
+    active_profile = global_profile
+  end
+
   update_text()
 end)
 
@@ -144,19 +150,20 @@ windower.register_event('login', function()
 end)
 
 windower.register_event('logout', function()
-  clear_active_profile()
+  reset_active_profile()
 end)
 
 function update_text()
   if active_profile == nil then
+    image:text('')
     return
   end
 
   settings = config.load()
-  if active_profile == 'global' then
-    display_text = get_inactive_buff_text('global')
+  if active_profile == global_profile then
+    display_text = get_inactive_buff_text(global_profile)
   else
-    display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text('global')
+    display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text(global_profile)
   end
 
   if settings.show_ok_message and table.length(settings.profiles[active_profile]) and display_text == '' then
@@ -296,14 +303,19 @@ function autodetect_job_profile()
   local switched_from_full_job_profile = sub_job and is_valid_full_job(active_profile) and active_profile ~= full_job
 
   if switched_from_main_job_profile or switched_from_full_job_profile then
-    log(string.format('Active profile cleared because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
-    clear_active_profile()
+    log(string.format('Active profile reset because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
+    reset_active_profile()
   end
 end
 
-function clear_active_profile()
-  active_profile = nil
-  image:text('')
+function reset_active_profile()
+  settings = config.load()
+  if settings.default_to_global_profile and settings.profiles[global_profile] then
+    active_profile = global_profile
+  else
+    active_profile = nil
+  end
+  update_text()
 end
 
 function is_valid_main_job(job)
@@ -378,7 +390,7 @@ function print_help_text()
     },
     {
       syntax = 'reset',
-      description = 'Clear active profile'
+      description = 'Reset active profile'
     },
     {
       syntax = '[find OR search] <buff name>',
@@ -442,7 +454,7 @@ windower.register_event('addon command', function(...)
     print_profile_list()
 
   elseif cmd[1] == 'reset' then
-    clear_active_profile()
+    reset_active_profile()
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then
     if cmd[2] == nil then

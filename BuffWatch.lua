@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]] --
 _addon.name = 'BuffWatch'
 _addon.author = 'Zuri'
-_addon.version = '0.3.1'
+_addon.version = '0.3.2'
 _addon.commands = {
   'buffwatch',
   'bw'
@@ -48,6 +48,7 @@ local colors = {
 }
 local jobs = {}
 local display_text = ''
+local global_profile = 'global'
 
 windower.register_event('load', function()
   defaults = T {
@@ -92,6 +93,7 @@ windower.register_event('load', function()
       }
     },
     auto_swap_job_profiles = true,
+    default_to_global_profile = true,
     show_ok_message = true
   }
 
@@ -113,6 +115,10 @@ windower.register_event('load', function()
   end
 
   autodetect_job_profile()
+  if active_profile == nil and settings.default_to_global_profile and settings.profiles.global then
+    active_profile = global_profile
+  end
+
   update_text()
 end)
 
@@ -144,23 +150,22 @@ windower.register_event('login', function()
 end)
 
 windower.register_event('logout', function()
-  clear_active_profile()
+  reset_active_profile()
 end)
 
 function update_text()
   if active_profile == nil then
+    image:text('')
     return
   end
 
-  display_text = ''
-  local active_buffs = windower.ffxi.get_player().buffs
-  for _, buff in pairs(settings.profiles[active_profile]) do
-    if not table.find(active_buffs, buff.id) then
-      display_text = string.format('%s %s\n', display_text, buff.label)
-    end
+  settings = config.load()
+  if active_profile == global_profile then
+    display_text = get_inactive_buff_text(global_profile)
+  else
+    display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text(global_profile)
   end
 
-  settings = config.load()
   if settings.show_ok_message and table.length(settings.profiles[active_profile]) and display_text == '' then
     display_text = string.format(' %sBuffs OK', colors.green)
   else
@@ -168,6 +173,23 @@ function update_text()
   end
 
   image:text(display_text)
+end
+
+function get_inactive_buff_text(profile_name)
+  -- Assume `settings` has already been updated prior to calling this function
+  if settings.profiles[profile_name] == nil or table.length(settings.profiles[profile_name]) == 0 then
+    return ''
+  end
+
+  local active_buffs = windower.ffxi.get_player().buffs
+
+  result = ''
+  for _, buff in pairs(settings.profiles[profile_name]) do
+    if not table.find(active_buffs, buff.id) then
+      result = string.format('%s %s\n', result, buff.label)
+    end
+  end
+  return result
 end
 
 function get_buff_id(buff_name)
@@ -204,9 +226,7 @@ function add_buff(profile_name, buff_name, label)
   log(line)
   settings:save('all')
 
-  if active_profile == profile_name then
-    update_text()
-  end
+  update_text()
 end
 
 function remove_buff(profile_name, buff_name)
@@ -231,9 +251,7 @@ function remove_buff(profile_name, buff_name)
     error(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
   end
 
-  if active_profile == profile_name then
-    update_text()
-  end
+  update_text()
 end
 
 function set_active_profile(profile_name)
@@ -285,14 +303,19 @@ function autodetect_job_profile()
   local switched_from_full_job_profile = sub_job and is_valid_full_job(active_profile) and active_profile ~= full_job
 
   if switched_from_main_job_profile or switched_from_full_job_profile then
-    log(string.format('Active profile cleared because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
-    clear_active_profile()
+    log(string.format('Active profile reset because `%s` no longer matches current job (%s/%s)', active_profile, main_job, sub_job))
+    reset_active_profile()
   end
 end
 
-function clear_active_profile()
-  active_profile = nil
-  image:text('')
+function reset_active_profile()
+  settings = config.load()
+  if settings.default_to_global_profile and settings.profiles[global_profile] then
+    active_profile = global_profile
+  else
+    active_profile = nil
+  end
+  update_text()
 end
 
 function is_valid_main_job(job)
@@ -367,7 +390,7 @@ function print_help_text()
     },
     {
       syntax = 'reset',
-      description = 'Clear active profile'
+      description = 'Reset active profile'
     },
     {
       syntax = '[find OR search] <buff name>',
@@ -431,7 +454,7 @@ windower.register_event('addon command', function(...)
     print_profile_list()
 
   elseif cmd[1] == 'reset' then
-    clear_active_profile()
+    reset_active_profile()
 
   elseif cmd[1] == 'find' or cmd[1] == 'search' then
     if cmd[2] == nil then

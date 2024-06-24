@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]] --
 _addon.name = 'BuffWatch'
 _addon.author = 'Zuri'
-_addon.version = '0.3.1'
+_addon.version = '0.3.2'
 _addon.commands = {
   'buffwatch',
   'bw'
@@ -151,16 +151,9 @@ function update_text()
   if active_profile == nil then
     return
   end
-
-  display_text = ''
-  local active_buffs = windower.ffxi.get_player().buffs
-  for _, buff in pairs(settings.profiles[active_profile]) do
-    if not table.find(active_buffs, buff.id) then
-      display_text = string.format('%s %s\n', display_text, buff.label)
-    end
-  end
-
   settings = config.load()
+  display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text('global')
+
   if settings.show_ok_message and table.length(settings.profiles[active_profile]) and display_text == '' then
     display_text = string.format(' %sBuffs OK', colors.green)
   else
@@ -168,6 +161,23 @@ function update_text()
   end
 
   image:text(display_text)
+end
+
+function get_inactive_buff_text(profile_name)
+  -- Assume `settings` has already been updated prior to calling this function
+  if settings.profiles[profile_name] == nil or table.length(settings.profiles[profile_name]) == 0 then
+    return ''
+  end
+
+  local active_buffs = windower.ffxi.get_player().buffs
+
+  result = ''
+  for _, buff in pairs(settings.profiles[profile_name]) do
+    if not table.find(active_buffs, buff.id) then
+      result = string.format('%s %s\n', result, buff.label)
+    end
+  end
+  return result
 end
 
 function get_buff_id(buff_name)
@@ -204,9 +214,7 @@ function add_buff(profile_name, buff_name, label)
   log(line)
   settings:save('all')
 
-  if active_profile == profile_name then
-    update_text()
-  end
+  update_text()
 end
 
 function remove_buff(profile_name, buff_name)
@@ -231,9 +239,7 @@ function remove_buff(profile_name, buff_name)
     error(string.format('Buff `%s` not found in profile `%s`', buff_name, profile_name))
   end
 
-  if active_profile == profile_name then
-    update_text()
-  end
+  update_text()
 end
 
 function set_active_profile(profile_name)

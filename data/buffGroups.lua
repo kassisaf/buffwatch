@@ -20,7 +20,7 @@ local BAR_STATUS = {
   amnesia = 286
 }
 
-local ENSPELLS = {
+local ENSPELL = {
   fire = 94,
   blizzard = 95,
   aero = 96,
@@ -45,12 +45,12 @@ local HASTE_FLURRY = {
   flurry = 581
 }
 
-local RERAISES = {
+local RERAISE = {
   reraise = 113,
   hymnus = 218
 }
 
-local RUNES = {
+local RUNE = {
   ignis = 523,
   gelus = 524,
   flabra = 525,
@@ -61,7 +61,7 @@ local RUNES = {
   tenebrae = 530
 }
 
-local SAMBAS = {
+local SAMBA = {
   drain = 368,
   aspir = 369,
   haste = 370
@@ -88,7 +88,7 @@ local SPIKES = {
   -- glint = 607
 }
 
-local STORMS = {
+local STORM = {
   fire = 178,
   hail = 179,
   wind = 180,
@@ -107,33 +107,40 @@ local STORMS = {
   void2 = 596
 }
 
-local DNC_STANCES = {
+local UTSUSEMI = {
+  copy_image_1 = 66,
+  copy_image_2 = 444,
+  copy_image_3 = 445,
+  copy_image_4 = 446
+}
+
+local DNC_STANCE = {
   saber_dance = 410,
   fan_dance = 411
 }
 
-local NIN_STANCES = {
+local NIN_STANCE = {
   yonin = 420,
   innin = 421
 }
 
-local RUN_STANCES = {
+local RUN_STANCE = {
   vallation = 531,
   valiance = 535,
   liement = 537
 }
 
-local SAM_STANCES = {
+local SAM_STANCE = {
   hasso = 353,
   seigan = 354
 }
 
-local SCH_STANCES = {
+local SCH_STANCE = {
   light_arts = 358,
   dark_arts = 359
 }
 
-local WHM_STANCES = {
+local WHM_STANCE = {
   solace = 417,
   misery = 418
 }

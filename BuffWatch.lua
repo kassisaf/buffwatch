@@ -151,8 +151,13 @@ function update_text()
   if active_profile == nil then
     return
   end
+
   settings = config.load()
-  display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text('global')
+  if active_profile == 'global' then
+    display_text = get_inactive_buff_text('global')
+  else
+    display_text = get_inactive_buff_text(active_profile) .. get_inactive_buff_text('global')
+  end
 
   if settings.show_ok_message and table.length(settings.profiles[active_profile]) and display_text == '' then
     display_text = string.format(' %sBuffs OK', colors.green)

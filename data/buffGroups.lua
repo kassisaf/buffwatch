@@ -76,6 +76,13 @@ local SHADOWS = {
   copy_image_4 = 446
 }
 
+local SIGNETS = {
+  signet = 253,
+  sanction = 256,
+  sigil = 268,
+  ionis = 512
+}
+
 local SPIKES = {
   blaze = 34,
   ice = 35,
